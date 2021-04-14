@@ -3,7 +3,7 @@ package com.emtdev.tus.netty.handler;
 import com.emtdev.tus.core.domain.FileStat;
 import com.emtdev.tus.core.extension.CreationDeferLengthExtension;
 import com.emtdev.tus.core.extension.CreationExtension;
-import com.emtdev.tus.core.extension.ExpirationExtension;
+import com.emtdev.tus.netty.event.TusEventPublisher;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -13,13 +13,11 @@ import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.util.internal.StringUtil;
 
-import java.util.Date;
-
 public class TusPatchHandler extends TusBaseRequestBodyHandler {
 
 
-    public TusPatchHandler(TusConfiguration tusConfiguration) {
-        super(tusConfiguration);
+    public TusPatchHandler(TusConfiguration configuration, TusEventPublisher tusEventPublisher) {
+        super(configuration, tusEventPublisher);
     }
 
     @Override

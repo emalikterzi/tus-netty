@@ -1,0 +1,4 @@
+tus:
+  netty:
+    locationPrefix: https://banaozel.sahibinden.com/sahibinden-ral/files/
+    basePath: /Users/enes.terzi/tus-sample

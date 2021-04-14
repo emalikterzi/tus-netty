@@ -1,0 +1,17 @@
+tus:
+  netty:
+    boss-threads: 1
+    worker-threads: 1
+    useLinuxNativeEpoll: false
+    port: 1080
+    socket:
+      tcp-no-delay: true
+      tcp-send-buffer-size: -1
+      tcpReceiveBufferSize: -1
+      tcpKeepAlive: false
+      soLinger: -1
+      reuseAddress: true
+      acceptBackLog: 1024
+spring:
+  profiles:
+    active: testbox

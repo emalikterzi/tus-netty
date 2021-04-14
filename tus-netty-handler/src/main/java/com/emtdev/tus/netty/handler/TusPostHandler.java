@@ -6,6 +6,8 @@ import com.emtdev.tus.core.domain.TusUploadMetaData;
 import com.emtdev.tus.core.extension.ConcatenationExtension;
 import com.emtdev.tus.core.extension.CreationDeferLengthExtension;
 import com.emtdev.tus.core.extension.CreationExtension;
+import com.emtdev.tus.netty.event.TusEvent;
+import com.emtdev.tus.netty.event.TusEventPublisher;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -19,8 +21,8 @@ public class TusPostHandler extends TusBaseRequestBodyHandler {
 
     private String locationHeader;
 
-    public TusPostHandler(TusConfiguration tusConfiguration) {
-        super(tusConfiguration);
+    public TusPostHandler(TusConfiguration configuration, TusEventPublisher tusEventPublisher) {
+        super(configuration, tusEventPublisher);
     }
 
     @Override
@@ -89,7 +91,7 @@ public class TusPostHandler extends TusBaseRequestBodyHandler {
                 ConcatenationExtension creation = (ConcatenationExtension) getConfiguration().getStore();
 
                 String fileId = getConfiguration().getFileIdProvider().generateFileId(accessor.getUploadMetadata(), false);
-                String locationHeader = getConfiguration().getLocationProvider().generateLocationHeader(fileId);
+                String locationHeader = getConfiguration().getLocationProvider().generateLocationHeader(accessor.getHttpRequest(), fileId);
 
                 OperationResult result = creation.merge(fileId, fileIds);
 
@@ -104,7 +106,7 @@ public class TusPostHandler extends TusBaseRequestBodyHandler {
                     addExpireHeaderToResponse(response);
 
                     tryToSaveFileStat(fileId, accessor.getUploadMetadata(), fileIds, accessor.getUploadConcat());
-
+                    tusEventPublisher.publishEvent(new TusEvent(fileId, TusEvent.Type.CREATE));
                 } else {
                     response = HttpResponseUtils.createHttpResponseWithBody(HttpResponseStatus.INTERNAL_SERVER_ERROR, result.getFailedReason());
                 }
@@ -166,7 +168,7 @@ public class TusPostHandler extends TusBaseRequestBodyHandler {
         CreationExtension creation = getConfiguration().getStore();
 
         fileId = getConfiguration().getFileIdProvider().generateFileId(accessor.getUploadMetadata(), partial);
-        locationHeader = getConfiguration().getLocationProvider().generateLocationHeader(fileId);
+        locationHeader = getConfiguration().getLocationProvider().generateLocationHeader(accessor.getHttpRequest(), fileId);
 
         OperationResult creationResult = creation.createFile(fileId);
 
@@ -178,6 +180,8 @@ public class TusPostHandler extends TusBaseRequestBodyHandler {
         }
 
         tryToSaveFileStat(fileId, accessor.getUploadMetadata(), uploadLength, accessor.uploadDeferLength());
+
+        tusEventPublisher.publishEvent(new TusEvent(fileId, TusEvent.Type.CREATE));
 
         if (contentLength == 0) {
             //creation must be called

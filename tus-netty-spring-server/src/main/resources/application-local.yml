@@ -1,0 +1,4 @@
+tus:
+  netty:
+    locationPrefix: http://localhost:1080/files/
+    basePath: /Users/enes.terzi/tus-sample

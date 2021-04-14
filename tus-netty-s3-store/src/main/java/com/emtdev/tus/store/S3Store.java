@@ -1,17 +1,13 @@
 package com.emtdev.tus.store;
 
-import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.PutObjectResult;
-import com.amazonaws.services.s3.model.S3Object;
 import com.emtdev.tus.core.TusConfigStore;
 import com.emtdev.tus.core.TusStore;
-import com.emtdev.tus.core.domain.Operation;
 import com.emtdev.tus.core.domain.OperationResult;
+import com.emtdev.tus.core.extension.CreationDeferLengthExtension;
 import io.netty.buffer.ByteBuf;
 
-public class S3Store implements TusStore {
+public class S3Store implements TusStore, CreationDeferLengthExtension {
 
     private final AmazonS3 s3;
     private final String bucketName;
@@ -54,4 +50,8 @@ public class S3Store implements TusStore {
 
     }
 
+    @Override
+    public TusConfigStore configStore() {
+        return null;
+    }
 }

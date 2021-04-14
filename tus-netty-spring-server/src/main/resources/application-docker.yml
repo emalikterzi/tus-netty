@@ -1,0 +1,4 @@
+tus:
+  netty:
+    locationPrefix: ${LOCATION_URI}
+    basePath: /data

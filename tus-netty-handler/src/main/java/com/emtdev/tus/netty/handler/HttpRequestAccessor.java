@@ -2,7 +2,6 @@ package com.emtdev.tus.netty.handler;
 
 import com.emtdev.tus.core.domain.TusUploadMetaData;
 import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.util.internal.StringUtil;
 
 public class HttpRequestAccessor {
@@ -20,11 +19,11 @@ public class HttpRequestAccessor {
     public static String LOCATION = "Location";
     public static String MEDIA_TYPE_STREAM = "application/offset+octet-stream";
 
-    private final HttpRequest fullHttpRequest;
+    private final HttpRequest httpRequest;
     private TusUploadMetaData uploadMetaData;
 
     private HttpRequestAccessor(HttpRequest fullHttpRequest) {
-        this.fullHttpRequest = fullHttpRequest;
+        this.httpRequest = fullHttpRequest;
     }
 
     public static HttpRequestAccessor of(HttpRequest fullHttpRequest) {
@@ -32,11 +31,15 @@ public class HttpRequestAccessor {
     }
 
     public long getContentLength() {
-        String value = fullHttpRequest.headers().get(CONTENT_LENGTH);
+        String value = httpRequest.headers().get(CONTENT_LENGTH);
         if (StringUtil.isNullOrEmpty(value)) {
             return 0;
         }
         return Long.parseLong(value);
+    }
+
+    public HttpRequest getHttpRequest() {
+        return httpRequest;
     }
 
     public TusUploadMetaData getUploadMetadata() {
@@ -44,25 +47,25 @@ public class HttpRequestAccessor {
             return uploadMetaData;
         }
 
-        String value = fullHttpRequest.headers().get(UPLOAD_METADATA);
+        String value = httpRequest.headers().get(UPLOAD_METADATA);
         uploadMetaData = new TusUploadMetaData(value);
         return uploadMetaData;
     }
 
     public boolean isContentTypeOffsetStream() {
-        return MEDIA_TYPE_STREAM.equals(fullHttpRequest.headers().get(CONTENT_TYPE));
+        return MEDIA_TYPE_STREAM.equals(httpRequest.headers().get(CONTENT_TYPE));
     }
 
     public String httpMethodOverride() {
-        return fullHttpRequest.headers().get(HTTP_METHOD_OVERRIDE);
+        return httpRequest.headers().get(HTTP_METHOD_OVERRIDE);
     }
 
     public String uploadDeferLength() {
-        return fullHttpRequest.headers().get(UPLOAD_DEFER_LENGTH);
+        return httpRequest.headers().get(UPLOAD_DEFER_LENGTH);
     }
 
     public long uploadLength() {
-        String value = fullHttpRequest.headers().get(UPLOAD_LENGTH);
+        String value = httpRequest.headers().get(UPLOAD_LENGTH);
         if (StringUtil.isNullOrEmpty(value)) {
             return 0;
         }
@@ -70,7 +73,7 @@ public class HttpRequestAccessor {
     }
 
     public String getUploadConcat() {
-        return fullHttpRequest.headers().get(UPLOAD_CONCAT);
+        return httpRequest.headers().get(UPLOAD_CONCAT);
     }
 
 }

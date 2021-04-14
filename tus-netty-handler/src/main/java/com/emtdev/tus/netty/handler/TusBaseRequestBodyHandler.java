@@ -4,6 +4,7 @@ import com.emtdev.tus.core.domain.OperationResult;
 import com.emtdev.tus.core.extension.CreationExtension;
 import com.emtdev.tus.core.extension.CreationWithUploadExtension;
 import com.emtdev.tus.core.extension.ExpirationExtension;
+import com.emtdev.tus.netty.event.TusEventPublisher;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -30,9 +31,11 @@ public abstract class TusBaseRequestBodyHandler extends ChannelInboundHandlerAda
     private final ReentrantLock lock = new ReentrantLock();
 
     private final TusConfiguration configuration;
+    protected final TusEventPublisher tusEventPublisher;
 
-    public TusBaseRequestBodyHandler(TusConfiguration tusConfiguration) {
-        this.configuration = tusConfiguration;
+    public TusBaseRequestBodyHandler(TusConfiguration configuration, TusEventPublisher tusEventPublisher) {
+        this.configuration = configuration;
+        this.tusEventPublisher = tusEventPublisher;
     }
 
     public TusConfiguration getConfiguration() {
