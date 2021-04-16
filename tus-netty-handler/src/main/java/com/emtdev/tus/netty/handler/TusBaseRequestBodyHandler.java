@@ -1,5 +1,6 @@
 package com.emtdev.tus.netty.handler;
 
+import com.emtdev.tus.core.domain.FileStat;
 import com.emtdev.tus.core.domain.OperationResult;
 import com.emtdev.tus.core.extension.CreationExtension;
 import com.emtdev.tus.core.extension.CreationWithUploadExtension;
@@ -75,10 +76,10 @@ public abstract class TusBaseRequestBodyHandler extends ChannelInboundHandlerAda
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        try {
-            getConfiguration().getStore().onException(fileId, cause);
-        } catch (Exception e) {
-        }
+//        try {
+//            getConfiguration().getStore().onException(fileId, cause);
+//        } catch (Exception e) {
+//        }
         ctx.fireExceptionCaught(cause);
     }
 
@@ -178,6 +179,25 @@ public abstract class TusBaseRequestBodyHandler extends ChannelInboundHandlerAda
         }
     }
 
+    private void beforeFinished() {
+        System.out.println("");
+
+        FileStat fileStat = configuration.getStore().configStore().get(fileId);
+        if (fileStat == null)
+            return;
+
+        if (fileStat.isPartial())
+            return;
+
+        long totalLength = fileStat.getUploadLength();
+        long fileLength = configuration.getStore().offset(fileId);
+
+        if (totalLength == fileLength) {
+            //should be finalize
+            getConfiguration().getStore().finalizeFile(fileId);
+        }
+    }
+
 
     private void _writeInternal(ChannelHandlerContext ctx, HttpContent msg, boolean requestFinished) {
 
@@ -217,6 +237,7 @@ public abstract class TusBaseRequestBodyHandler extends ChannelInboundHandlerAda
             }
 
             if (operationResult.isSuccess()) {
+                beforeFinished();
                 onWriteFinished(ctx, msg);
             } else {
                 HttpResponse response = HttpResponseUtils

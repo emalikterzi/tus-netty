@@ -179,7 +179,7 @@ public class TusPostHandler extends TusBaseRequestBodyHandler {
             return;
         }
 
-        tryToSaveFileStat(fileId, accessor.getUploadMetadata(), uploadLength, accessor.uploadDeferLength());
+        tryToSaveFileStat(fileId, accessor.getUploadMetadata(), uploadLength, accessor.uploadDeferLength(), partial);
 
         tusEventPublisher.publishEvent(new TusEvent(fileId, TusEvent.Type.CREATE));
 
@@ -234,7 +234,7 @@ public class TusPostHandler extends TusBaseRequestBodyHandler {
         if (tusUploadMetaData != null && !StringUtil.isNullOrEmpty(tusUploadMetaData.getClientValue())) {
             clientUploadMeta = tusUploadMetaData.getClientValue();
         }
-        CreationDeferLengthExtension creationDeferLengthExtension = (CreationDeferLengthExtension) getConfiguration().getStore();
+        CreationDeferLengthExtension creationDeferLengthExtension = getConfiguration().getStore();
 
         long total = 0;
 
@@ -243,13 +243,13 @@ public class TusPostHandler extends TusBaseRequestBodyHandler {
             total += fileStat.getUploadLength();
         }
 
-        FileStat fileStat = new FileStat(fileId, total, null, clientUploadMeta, uploadConcat);
+        FileStat fileStat = new FileStat(fileId, total, null, clientUploadMeta, uploadConcat, false);
 
         creationDeferLengthExtension.configStore().save(fileStat);
 
     }
 
-    private void tryToSaveFileStat(String fileId, TusUploadMetaData tusUploadMetaData, long uploadLength, String uploadDefer) {
+    private void tryToSaveFileStat(String fileId, TusUploadMetaData tusUploadMetaData, long uploadLength, String uploadDefer, boolean partial) {
         if (!ExtensionUtils.supports(getConfiguration().getStore(), ExtensionUtils.Extension.CREATION_DEFER_LENGTH)) {
             return;
         }
@@ -264,9 +264,9 @@ public class TusPostHandler extends TusBaseRequestBodyHandler {
             clientUploadMeta = tusUploadMetaData.getClientValue();
         }
 
-        FileStat fileStat = new FileStat(fileId, uploadLength, uploadDefer, clientUploadMeta, null);
+        FileStat fileStat = new FileStat(fileId, uploadLength, uploadDefer, clientUploadMeta, null, partial);
 
-        CreationDeferLengthExtension creationDeferLength = (CreationDeferLengthExtension) getConfiguration().getStore();
+        CreationDeferLengthExtension creationDeferLength = getConfiguration().getStore();
 
         creationDeferLength.configStore().save(fileStat);
     }

@@ -16,21 +16,14 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class FileStore implements TusStore, CreationDeferLengthExtension, ConcatenationExtension, CreationWithUploadExtension, TerminationExtension {
+public class FileStore extends TusStore implements ConcatenationExtension, CreationWithUploadExtension, TerminationExtension {
 
     private final String baseDirectory;
-    private final TusConfigStore configStore;
-    private final Map<String, OutputStream> outputStreamMap = new ConcurrentHashMap<>();
     private final static int BUFFER = 4096;
 
     public FileStore(String baseDirectory, TusConfigStore configStore) {
+        super(configStore);
         this.baseDirectory = baseDirectory;
-        this.configStore = configStore;
-    }
-
-    @Override
-    public TusConfigStore configStore() {
-        return this.configStore;
     }
 
     @Override
@@ -62,13 +55,19 @@ public class FileStore implements TusStore, CreationDeferLengthExtension, Concat
     }
 
     @Override
+    public OperationResult finalizeFile(String fileId) {
+        //already file persisted in file disk do nothing
+        return OperationResult.SUCCESS;
+    }
+
+    @Override
     public OperationResult delete(String fileId) {
         File file = getFile(fileId);
         boolean status = file.delete();
         return status ? OperationResult.SUCCESS : OperationResult.of(Operation.FAILED, "File Delete Failed");
     }
 
-    private File getFile(String fileId) {
+    protected File getFile(String fileId) {
         return Paths.get(baseDirectory, fileId).toFile();
     }
 
@@ -140,13 +139,4 @@ public class FileStore implements TusStore, CreationDeferLengthExtension, Concat
         return this.internalWrite(fileId, inputStream);
     }
 
-    @Override
-    public void afterConnectionClose(String fileId) {
-
-    }
-
-    @Override
-    public void onException(String fileId, Throwable e) {
-
-    }
 }

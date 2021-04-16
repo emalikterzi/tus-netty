@@ -1,14 +1,21 @@
 package com.emtdev.tus.core;
 
+import com.emtdev.tus.core.extension.CreationDeferLengthExtension;
 import com.emtdev.tus.core.extension.CreationExtension;
 
 /**
  * Store Marker Interface
  */
-public interface TusStore extends CreationExtension {
+public abstract class TusStore implements CreationExtension, CreationDeferLengthExtension {
 
-    void afterConnectionClose(String fileId);
+    private final TusConfigStore configStore;
 
-    void onException(String fileId, Throwable e);
+    public TusStore(TusConfigStore configStore) {
+        this.configStore = configStore;
+    }
 
+    @Override
+    public final TusConfigStore configStore() {
+        return this.configStore;
+    }
 }

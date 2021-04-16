@@ -17,6 +17,11 @@
 
 
     <dependencies>
+        <dependency>
+            <groupId>com.emtdev</groupId>
+            <artifactId>tus-netty-s3-store</artifactId>
+            <version>0.0.1</version>
+        </dependency>
 
         <dependency>
             <groupId>io.netty</groupId>

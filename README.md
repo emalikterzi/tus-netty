@@ -30,4 +30,13 @@ nearly any other cloud provider could easily be added to tusd.
 - Concatenation [ x ]
 - Checksum [  ]
 
+# Stores
+
+- FileStore [ x ] , supports extension creation,creation-with-upload,creation-defer-length,expiration,concatenation,termination
+- S3Store [ x ] , supports extension creation,creation-with-upload,creation-defer-length,expiration,concatenation,termination
+- GCSStore [ ]
+
+s3 store uses file disk to supports some extensions 
+s3 store not using multipart todo
+
 # Not Production Ready !!

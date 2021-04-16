@@ -15,4 +15,6 @@ public interface CreationExtension extends Extension {
 
     long offset(String fileId);
 
+    OperationResult finalizeFile(String fileId);
+
 }
