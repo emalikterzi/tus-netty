@@ -31,7 +31,6 @@ public class TusWrongRequestHandler extends ChannelInboundHandlerAdapter {
             ChannelFuture f = channel.writeAndFlush(res);
             f.addListener(ChannelFutureListener.CLOSE);
             System.out.printf("Blocked wrong tus request! url: %s, params: %s, ip: %s%n", queryDecoder.path(), queryDecoder.parameters(), channel.remoteAddress());
-        } else {
             ReferenceCountUtil.release(msg);
         }
     }

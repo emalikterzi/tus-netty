@@ -22,7 +22,7 @@ public class TusPostHandler extends TusBaseRequestBodyHandler {
     private String locationHeader;
 
     public TusPostHandler(TusConfiguration configuration, TusEventPublisher tusEventPublisher) {
-        super(configuration, tusEventPublisher);
+        super(configuration, tusEventPublisher, TusNettyDecoder.POST);
     }
 
     @Override
@@ -66,7 +66,7 @@ public class TusPostHandler extends TusBaseRequestBodyHandler {
 
             if (!ExtensionUtils.supports(getConfiguration().getStore(), ExtensionUtils.Extension.CONCATENATION)) {
                 HttpResponse response =
-                        HttpResponseUtils.createHttpResponseWithBody(HttpResponseStatus.PRECONDITION_FAILED, "Store not supports creation");
+                        HttpResponseUtils.createHttpResponseWithBody(HttpResponseStatus.PRECONDITION_FAILED, "Store not supports concatenation");
 
                 ctx.writeAndFlush(response).
                         addListener(ChannelFutureListener.CLOSE);

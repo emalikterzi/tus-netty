@@ -17,7 +17,7 @@ public class TusPatchHandler extends TusBaseRequestBodyHandler {
 
 
     public TusPatchHandler(TusConfiguration configuration, TusEventPublisher tusEventPublisher) {
-        super(configuration, tusEventPublisher);
+        super(configuration, tusEventPublisher, TusNettyDecoder.PATCH);
     }
 
     @Override
@@ -81,7 +81,13 @@ public class TusPatchHandler extends TusBaseRequestBodyHandler {
         long contentLength = accessor.getContentLength();
         long fileOffset = creation.offset(fileId);
 
-        if (uploadLength != (contentLength + fileOffset)) {
+        /**
+         * The Upload-Offset header’s value MUST be equal to the current offset of the resource.
+         * In order to achieve parallel upload the Concatenation extension MAY be used.
+         * If the offsets do not match, the Server MUST respond with the 409 Conflict status without modifying the upload resource.
+         */
+
+        if (accessor.uploadOffset() != fileOffset) {
             HttpResponse response =
                     HttpResponseUtils.createHttpResponseWithBody(HttpResponseStatus.CONFLICT, "File Offset with Upload Offset Conflict");
             ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);

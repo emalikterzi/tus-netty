@@ -12,6 +12,7 @@ import com.emtdev.tus.store.FileStore;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
+import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
 
@@ -35,7 +36,10 @@ public class TusChannelInitializer extends ChannelInitializer<Channel> {
 
 
         p.addLast("handler1", new HttpResponseEncoder());
+
+
         p.addLast("handler2", new HttpRequestDecoder());
+//        p.addLast("handler3", new HttpObjectAggregator(64 * 64 * 1024));
 
 
         p.addLast(tusNettyDecoder);

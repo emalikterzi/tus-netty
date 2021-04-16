@@ -52,6 +52,14 @@ public class HttpRequestAccessor {
         return uploadMetaData;
     }
 
+    public long uploadOffset() {
+        String value = httpRequest.headers().get(UPLOAD_OFFSET);
+        if (StringUtil.isNullOrEmpty(value)) {
+            return 0;
+        }
+        return Long.parseLong(value);
+    }
+
     public boolean isContentTypeOffsetStream() {
         return MEDIA_TYPE_STREAM.equals(httpRequest.headers().get(CONTENT_TYPE));
     }

@@ -6,36 +6,43 @@ import com.emtdev.tus.core.extension.CreationWithUploadExtension;
 import com.emtdev.tus.core.extension.ExpirationExtension;
 import com.emtdev.tus.netty.event.TusEventPublisher;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.UnpooledByteBufAllocator;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.handler.codec.http.HttpContent;
-import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.HttpResponse;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.codec.http.LastHttpContent;
+import io.netty.handler.codec.http.*;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.internal.StringUtil;
 
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 public abstract class TusBaseRequestBodyHandler extends ChannelInboundHandlerAdapter {
 
-    protected String fileId;
 
     private final ReentrantLock lock = new ReentrantLock();
-
+    private final Object locker = new Object();
     private final TusConfiguration configuration;
     protected final TusEventPublisher tusEventPublisher;
+    protected final String httpMethod;
+    protected State currentState = State.NEW;
 
-    public TusBaseRequestBodyHandler(TusConfiguration configuration, TusEventPublisher tusEventPublisher) {
+    protected String fileId;
+    private ExecutorService executorService;
+    private TusBaseInputStream inputStream;
+    private boolean writerInitialized = false;
+    private Callable<OperationResult> operationResultCallable;
+    private Future<OperationResult> operationResultFuture;
+
+    public TusBaseRequestBodyHandler(TusConfiguration configuration, TusEventPublisher tusEventPublisher, String httpMethpd) {
         this.configuration = configuration;
         this.tusEventPublisher = tusEventPublisher;
+        this.httpMethod = httpMethpd;
     }
 
     public TusConfiguration getConfiguration() {
@@ -58,11 +65,12 @@ public abstract class TusBaseRequestBodyHandler extends ChannelInboundHandlerAda
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        try {
-            getConfiguration().getStore().afterConnectionClose(fileId);
-        } catch (Exception e) {
-
+        if (this.currentState == State.BODY) {
+            if (inputStream != null && writerInitialized) {
+                inputStream.close();
+            }
         }
+        ctx.fireChannelInactive();
     }
 
     @Override
@@ -70,8 +78,8 @@ public abstract class TusBaseRequestBodyHandler extends ChannelInboundHandlerAda
         try {
             getConfiguration().getStore().onException(fileId, cause);
         } catch (Exception e) {
-
         }
+        ctx.fireExceptionCaught(cause);
     }
 
     private String getDateStr(Date date) {
@@ -97,44 +105,124 @@ public abstract class TusBaseRequestBodyHandler extends ChannelInboundHandlerAda
 
     public void _writePost(ChannelHandlerContext ctx, HttpContent msg) {
         boolean requestFinished = (msg instanceof LastHttpContent);
-
-        ByteBuf body = msg.content();
-
-        CreationWithUploadExtension creationExtension = (CreationWithUploadExtension) getConfiguration().getStore();
-
-        OperationResult operationResult = creationExtension.createAndWrite(fileId, body, requestFinished);
-
-        _writeInternal(ctx, msg, operationResult, requestFinished);
+        final CreationWithUploadExtension creationExtension = (CreationWithUploadExtension) getConfiguration().getStore();
+        synchronized (locker) {
+            inputStream = new TusOrderInputStream();
+            operationResultCallable = new ForPost(fileId, inputStream, creationExtension);
+            tryToInitializeWriter();
+        }
+        _writeInternal(ctx, msg, requestFinished);
     }
 
     public void _writePatch(ChannelHandlerContext ctx, HttpContent msg) {
         boolean requestFinished = (msg instanceof LastHttpContent);
+        final CreationExtension creationExtension = getConfiguration().getStore();
 
-        ByteBuf body = msg.content();
+        synchronized (locker) {
+            if (operationResultCallable == null) {
+                inputStream = new TusOrderInputStream();
+                operationResultCallable = new ForPatch(fileId, inputStream, creationExtension);
+                tryToInitializeWriter();
+            }
+        }
 
-        CreationExtension creationExtension = getConfiguration().getStore();
+        _writeInternal(ctx, msg, requestFinished);
+    }
 
-        OperationResult operationResult = creationExtension.write(fileId, body, requestFinished);
+    private void tryToInitializeWriter() {
+        if (this.writerInitialized) {
+            return;
+        }
+        this.writerInitialized = true;
+        executorService = Executors.newSingleThreadExecutor();
+        operationResultFuture = executorService.submit(operationResultCallable);
+        executorService.shutdown();
+    }
 
-        _writeInternal(ctx, msg, operationResult, requestFinished);
+    private class ForPost implements Callable<OperationResult> {
+
+        private final String fileId;
+        private final InputStream inputStream;
+        private final CreationWithUploadExtension creationExtension;
+
+        public ForPost(String fileId, InputStream inputStream, CreationWithUploadExtension creationExtension) {
+            this.fileId = fileId;
+            this.inputStream = inputStream;
+            this.creationExtension = creationExtension;
+        }
+
+
+        @Override
+        public OperationResult call() throws Exception {
+            return creationExtension.createAndWrite(fileId, inputStream);
+        }
     }
 
 
-    private void _writeInternal(ChannelHandlerContext ctx, HttpContent msg, OperationResult operationResult, boolean requestFinished) {
+    private class ForPatch implements Callable<OperationResult> {
 
-        ReferenceCountUtil.release(msg);
+        private final String fileId;
+        private final InputStream inputStream;
+        private final CreationExtension creationExtension;
 
-        if (!operationResult.isSuccess()) {
-
-            HttpResponse response = HttpResponseUtils
-                    .createHttpResponseWithBody(HttpResponseStatus.INTERNAL_SERVER_ERROR, operationResult.getFailedReason());
-            ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
-
-            return;
+        public ForPatch(String fileId, InputStream inputStream, CreationExtension creationExtension) {
+            this.fileId = fileId;
+            this.inputStream = inputStream;
+            this.creationExtension = creationExtension;
         }
 
-        if (requestFinished) {
-            onWriteFinished(ctx, msg);
+
+        @Override
+        public OperationResult call() throws Exception {
+            return creationExtension.write(fileId, inputStream);
+        }
+    }
+
+
+    private void _writeInternal(ChannelHandlerContext ctx, HttpContent msg, boolean requestFinished) {
+
+        /**
+         * request body tamamlanmadan yazma asamasinda bir problem ciktiysa buraya girer input stream i direk kapatip
+         * hata donuyoruz
+         */
+        if (!requestFinished && this.operationResultFuture.isDone()) {
+
+            HttpResponse response = HttpResponseUtils
+                    .createHttpResponseWithBody(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Operation Result Failed");
+            ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+            inputStream.close();
+
+            return;
+
+        } else if (!requestFinished) {
+            ByteBuf byteBuf = UnpooledByteBufAllocator.DEFAULT.directBuffer();
+            byteBuf.writeBytes(msg.content());
+            inputStream.writeByte(byteBuf);
+        } else {
+            /**
+             * son body geldigine gore input stream i kapatip son byte body i yaziyoruz
+             */
+            ByteBuf byteBuf = UnpooledByteBufAllocator.DEFAULT.directBuffer();
+            byteBuf.writeBytes(msg.content());
+            inputStream.closeAndWrite(byteBuf);
+
+            OperationResult operationResult;
+            try {
+                operationResult = this.operationResultFuture.get();
+            } catch (InterruptedException | ExecutionException e) {
+                HttpResponse response = HttpResponseUtils
+                        .createHttpResponseWithBody(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Operation Result Failed On Last Byte");
+                ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+                return;
+            }
+
+            if (operationResult.isSuccess()) {
+                onWriteFinished(ctx, msg);
+            } else {
+                HttpResponse response = HttpResponseUtils
+                        .createHttpResponseWithBody(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Operation Result Failed");
+                ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+            }
         }
     }
 
@@ -151,11 +239,14 @@ public abstract class TusBaseRequestBodyHandler extends ChannelInboundHandlerAda
             try {
                 if (httpRequest) {
                     HttpRequest message = (HttpRequest) msg;
+                    currentState = State.REQUEST;
                     this.channelRead0(ctx, message);
                 } else {
                     HttpContent message = (HttpContent) msg;
+                    currentState = State.BODY;
                     this.channelRead0(ctx, message);
                 }
+                ReferenceCountUtil.release(msg);
             } finally {
                 lock.unlock();
             }
@@ -163,5 +254,10 @@ public abstract class TusBaseRequestBodyHandler extends ChannelInboundHandlerAda
         } else {
             ctx.fireChannelRead(msg);
         }
+    }
+
+
+    public enum State {
+        NEW, REQUEST, BODY
     }
 }

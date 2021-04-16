@@ -7,6 +7,8 @@ import com.emtdev.tus.core.domain.OperationResult;
 import com.emtdev.tus.core.extension.CreationDeferLengthExtension;
 import io.netty.buffer.ByteBuf;
 
+import java.io.InputStream;
+
 public class S3Store implements TusStore, CreationDeferLengthExtension {
 
     private final AmazonS3 s3;
@@ -24,9 +26,7 @@ public class S3Store implements TusStore, CreationDeferLengthExtension {
     }
 
     @Override
-    public OperationResult write(String fileId, ByteBuf byteBuf, boolean finalBytes) {
-
-
+    public OperationResult write(String fileId, InputStream inputStream) {
         return null;
     }
 

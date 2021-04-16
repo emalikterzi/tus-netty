@@ -11,12 +11,7 @@ import com.emtdev.tus.core.extension.CreationWithUploadExtension;
 import com.emtdev.tus.core.extension.TerminationExtension;
 import io.netty.buffer.ByteBuf;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -50,8 +45,8 @@ public class FileStore implements TusStore, CreationDeferLengthExtension, Concat
     }
 
     @Override
-    public OperationResult write(String fileId, ByteBuf content, boolean finalBytes) {
-        return internalWrite(fileId, content, finalBytes);
+    public OperationResult write(String fileId, InputStream inputStream) {
+        return internalWrite(fileId, inputStream);
     }
 
     @Override
@@ -77,27 +72,25 @@ public class FileStore implements TusStore, CreationDeferLengthExtension, Concat
         return Paths.get(baseDirectory, fileId).toFile();
     }
 
-    private OperationResult internalWrite(String fileId, ByteBuf content, boolean finalBytes) {
+    private OperationResult internalWrite(String fileId, InputStream inputStream) {
         OutputStream outputStream;
         try {
-            outputStream = createOrGetOutputStream(fileId);
+            outputStream = new FileOutputStream(getFile(fileId), true);
         } catch (Exception e) {
             return OperationResult.of(Operation.FAILED, "Could Not Open Stream");
         }
 
+        byte[] buff = new byte[BUFFER];
+        int len;
         try {
-            while (content.isReadable()) {
-                int remain = content.writerIndex() - content.readerIndex();
-                content.readBytes(outputStream, Math.min(remain, BUFFER));
+            while ((len = inputStream.read(buff)) != -1) {
+                outputStream.write(buff, 0, len);
             }
-        } catch (IOException e) {
-            return OperationResult.of(Operation.FAILED, "Could Not Write File");
+        } catch (Exception e) {
+            return OperationResult.of(Operation.FAILED, "Could Not Write Stream");
         }
 
-        if (finalBytes) {
-            outputStreamMap.remove(fileId);
-            closeSilently(outputStream);
-        }
+        closeSilently(outputStream);
 
         return OperationResult.SUCCESS;
     }
@@ -112,14 +105,6 @@ public class FileStore implements TusStore, CreationDeferLengthExtension, Concat
         }
     }
 
-    private OutputStream createOrGetOutputStream(String fileId) throws Exception {
-        OutputStream outputStream = outputStreamMap.get(fileId);
-        if (outputStream == null) {
-            outputStream = new FileOutputStream(getFile(fileId), true);
-            outputStreamMap.put(fileId, outputStream);
-        }
-        return outputStream;
-    }
 
     @Override
     public OperationResult merge(String fileId, String... fileIds) {
@@ -151,8 +136,8 @@ public class FileStore implements TusStore, CreationDeferLengthExtension, Concat
     }
 
     @Override
-    public OperationResult createAndWrite(String fileId, ByteBuf byteBuf, boolean finalBytes) {
-        return this.internalWrite(fileId, byteBuf, finalBytes);
+    public OperationResult createAndWrite(String fileId, InputStream inputStream) {
+        return this.internalWrite(fileId, inputStream);
     }
 
     @Override

@@ -7,10 +7,13 @@ import io.netty.channel.ServerChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.ResourceLeakDetector;
-import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.FutureListener;
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class Main {
 
@@ -31,10 +34,35 @@ public class Main {
         b.bind(addr).addListener(new FutureListener() {
 
             @Override
-            public void operationComplete(Future future) throws Exception {
+            public void operationComplete(io.netty.util.concurrent.Future future) throws Exception {
                 System.out.println("server Starterd");
             }
+
+
         });
     }
 
+
+//    public static void main(String[] args) {
+//        ExecutorService executorService = Executors.newSingleThreadExecutor();
+//        Future<Object> objectFuture = executorService.submit(new Callable<Object>() {
+//            @Override
+//            public Object call() throws Exception {
+//                Thread.sleep(5000);
+//                System.out.println("finisgded");
+//                return 1;
+//            }
+//
+//            ;
+//        });
+//
+//        while (true) {
+//            System.out.println(objectFuture.isDone());
+//            try {
+//                Thread.sleep(100);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//        }
+//    }
 }

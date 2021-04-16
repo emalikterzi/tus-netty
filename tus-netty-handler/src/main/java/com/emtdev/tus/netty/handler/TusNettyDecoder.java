@@ -12,11 +12,11 @@ import io.netty.util.internal.StringUtil;
 @ChannelHandler.Sharable
 public class TusNettyDecoder extends ChannelInboundHandlerAdapter {
 
-    private final static String OPTIONS = "OPTIONS";
-    private final static String HEAD = "HEAD";
-    private final static String DELETE = "DELETE";
-    private final static String POST = "POST";
-    private final static String PATCH = "PATCH";
+    protected final static String OPTIONS = "OPTIONS";
+    protected final static String HEAD = "HEAD";
+    protected final static String DELETE = "DELETE";
+    protected final static String POST = "POST";
+    protected final static String PATCH = "PATCH";
 
     private final TusOptionsHandler tusOptionsHandler;
     private final TusConfiguration tusConfiguration;
