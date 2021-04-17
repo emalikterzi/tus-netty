@@ -14,11 +14,6 @@ specifies a flexible method to upload files to remote servers using HTTP.
 The special feature is the ability to pause and resume uploads at any
 moment allowing to continue seamlessly after e.g. network interruptions.
 
-It is capable of accepting uploads with arbitrary sizes and storing them locally
-on disk, on Google Cloud Storage or on AWS S3 (or any other S3-compatible
-storage system). Due to its modularization and extensibility, support for
-nearly any other cloud provider could easily be added to tusd.
-
 **Protocol version:** 1.0.0
 
 ### Protocol Extensions Support
@@ -39,4 +34,10 @@ nearly any other cloud provider could easily be added to tusd.
 s3 store uses file disk to supports some extensions 
 s3 store not using multipart todo
 
+## About Implementation Of This Server
+
+tbd
+
 # Not Production Ready !!
+
+Kind of ready for file storage :)

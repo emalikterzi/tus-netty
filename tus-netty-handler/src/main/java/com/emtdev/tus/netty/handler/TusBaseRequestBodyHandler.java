@@ -180,7 +180,6 @@ public abstract class TusBaseRequestBodyHandler extends ChannelInboundHandlerAda
     }
 
     private void beforeFinished() {
-        System.out.println("");
 
         FileStat fileStat = configuration.getStore().configStore().get(fileId);
         if (fileStat == null)

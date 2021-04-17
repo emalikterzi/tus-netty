@@ -14,6 +14,7 @@
         <module>tus-netty-handler</module>
         <module>tus-netty-file-store</module>
         <module>tus-netty-s3-store</module>
+        <module>tus-netty-gcs-store</module>
         <module>tus-netty-server-examples</module>
         <module>tus-netty-spring-server</module>
 
