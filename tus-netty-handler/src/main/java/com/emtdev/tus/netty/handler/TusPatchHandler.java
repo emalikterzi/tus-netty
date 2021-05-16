@@ -1,6 +1,7 @@
 package com.emtdev.tus.netty.handler;
 
 import com.emtdev.tus.core.domain.FileStat;
+import com.emtdev.tus.core.extension.ChecksumExtension;
 import com.emtdev.tus.core.extension.CreationDeferLengthExtension;
 import com.emtdev.tus.core.extension.CreationExtension;
 import com.emtdev.tus.netty.event.TusEventPublisher;
@@ -15,6 +16,11 @@ import io.netty.util.internal.StringUtil;
 
 public class TusPatchHandler extends TusBaseRequestBodyHandler {
 
+    public static HttpResponseStatus CHECKSUM_MISMATCH = new HttpResponseStatus(460, "Checksum Mismatch");
+
+    private boolean uploadChecksum;
+    private String checksumValue;
+    private String checksumAlg;
 
     public TusPatchHandler(TusConfiguration configuration, TusEventPublisher tusEventPublisher) {
         super(configuration, tusEventPublisher, TusNettyDecoder.PATCH);
@@ -29,9 +35,23 @@ public class TusPatchHandler extends TusBaseRequestBodyHandler {
     protected void onWriteFinished(ChannelHandlerContext ctx, HttpContent msg) {
         CreationExtension creationExtension = getConfiguration().getStore();
 
+        if (uploadChecksum) {
+
+            ChecksumExtension checksumExtension = (ChecksumExtension) getConfiguration().getStore();
+            String checksum = checksumExtension.checksum(checksumAlg, fileId);
+
+            if (!checksum.equals(checksumValue)) {
+
+                HttpResponse response = HttpResponseUtils
+                        .createHttpResponseWithBody(CHECKSUM_MISMATCH, "Checksum Mismatch");
+                ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+                return;
+            }
+
+        }
+
         HttpResponse response = HttpResponseUtils.createHttpResponse(HttpResponseStatus.NO_CONTENT);
         response.headers().add(HttpRequestAccessor.UPLOAD_OFFSET, creationExtension.offset(fileId));
-
         addExpireHeaderToResponse(response);
 
         ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
@@ -40,6 +60,28 @@ public class TusPatchHandler extends TusBaseRequestBodyHandler {
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, HttpRequest msg) throws Exception {
         HttpRequestAccessor accessor = HttpRequestAccessor.of(msg);
+        this.uploadChecksum = accessor.uploadChecksum();
+        if (this.uploadChecksum) {
+
+            if (!ExtensionUtils.supports(getConfiguration().getStore(), ExtensionUtils.Extension.CHECKSUM)) {
+                HttpResponse response = HttpResponseUtils
+                        .createHttpResponseWithBody(HttpResponseStatus.BAD_REQUEST, "Store Not Support Checksum");
+                ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+                return;
+            }
+
+            ChecksumExtension checksumExtension = (ChecksumExtension) getConfiguration().getStore();
+
+            if (!ExtensionUtils.supportChecksumStrategy(checksumExtension, accessor.getChecksumAlgName())) {
+                HttpResponse response = HttpResponseUtils
+                        .createHttpResponseWithBody(HttpResponseStatus.BAD_REQUEST, "Store Not Support Checksum Alg : " + accessor.getChecksumAlgName());
+                ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+                return;
+            }
+
+            this.checksumValue = accessor.getChecksumValue();
+            this.checksumAlg = accessor.getChecksumAlgName();
+        }
 
         if (!accessor.isContentTypeOffsetStream()) {
             HttpResponse response = HttpResponseUtils
@@ -50,11 +92,9 @@ public class TusPatchHandler extends TusBaseRequestBodyHandler {
 
         this.fileId = TusBaseRequestHandler.resolveFileFromUri(msg.uri());
 
-        long uploadLength;
-
         if (ExtensionUtils.supports(getConfiguration().getStore(), ExtensionUtils.Extension.CREATION_DEFER_LENGTH)) {
 
-            CreationDeferLengthExtension creationDeferLengthExtension = (CreationDeferLengthExtension) getConfiguration().getStore();
+            CreationDeferLengthExtension creationDeferLengthExtension = getConfiguration().getStore();
             FileStat fileStat = creationDeferLengthExtension.configStore().get(this.fileId);
 
             if (!StringUtil.isNullOrEmpty(fileStat.getUploadDefer()) && fileStat.getUploadDefer().equals("1") && accessor.uploadLength() != 0) {
@@ -62,9 +102,6 @@ public class TusPatchHandler extends TusBaseRequestBodyHandler {
                 creationDeferLengthExtension.configStore().update(fileStat);
             }
 
-            uploadLength = fileStat.getUploadLength();
-        } else {
-            uploadLength = accessor.uploadLength();
         }
 
         CreationExtension creation = getConfiguration().getStore();
@@ -78,7 +115,6 @@ public class TusPatchHandler extends TusBaseRequestBodyHandler {
             return;
         }
 
-        long contentLength = accessor.getContentLength();
         long fileOffset = creation.offset(fileId);
 
         /**

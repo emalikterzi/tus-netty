@@ -1,11 +1,19 @@
 package com.emtdev.tus.netty.handler;
 
 import com.emtdev.tus.core.TusStore;
-import com.emtdev.tus.core.extension.*;
+import com.emtdev.tus.core.extension.ChecksumExtension;
+import com.emtdev.tus.core.extension.ConcatenationExtension;
+import com.emtdev.tus.core.extension.CreationDeferLengthExtension;
+import com.emtdev.tus.core.extension.CreationExtension;
+import com.emtdev.tus.core.extension.CreationWithUploadExtension;
+import com.emtdev.tus.core.extension.ExpirationExtension;
+import com.emtdev.tus.core.extension.TerminationExtension;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 
 public class ExtensionUtils {
 
@@ -15,6 +23,7 @@ public class ExtensionUtils {
     private final static Class<TerminationExtension> TERMINATION_EXTENSION_CLASS = TerminationExtension.class;
     private final static Class<ConcatenationExtension> CONCATENATION_EXTENSION_CLASS = ConcatenationExtension.class;
     private final static Class<ExpirationExtension> EXPIRATION_EXTENSION_CLASS = ExpirationExtension.class;
+    private final static Class<ChecksumExtension> CHECKSUM_EXTENSION_CLASS = ChecksumExtension.class;
 
     public static boolean supports(TusStore store, Extension extension) {
         Class<?>[] classes = extension.extensionClass;
@@ -24,12 +33,26 @@ public class ExtensionUtils {
                 return false;
             }
         }
-
         return true;
     }
 
+    public static boolean supportChecksumStrategy(ChecksumExtension checksumExtension, String alg) {
+        String[] checksumStrategies = checksumExtension.checksumStrategies();
+        for (String each : checksumStrategies) {
+            if (alg.toLowerCase(Locale.ENGLISH).equals(each.toLowerCase(Locale.ENGLISH))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static String checksumHeaderValue(ChecksumExtension checksumExtension) {
+        String[] values = checksumExtension.checksumStrategies();
+        List<String> strings = Arrays.asList(values);
+        return joinIterator(strings.iterator());
+    }
+
     public static String extensionHeaderValue(TusStore store) {
-        StringBuilder sb = new StringBuilder();
         List<String> extensionValues = new ArrayList<String>();
 
         Extension[] values = Extension.values();
@@ -44,7 +67,11 @@ public class ExtensionUtils {
             return "";
         }
 
-        Iterator<String> iterator = extensionValues.iterator();
+        return joinIterator(extensionValues.iterator());
+    }
+
+    private static String joinIterator(Iterator<String> iterator) {
+        StringBuilder sb = new StringBuilder();
 
         while (iterator.hasNext()) {
             String value = iterator.next();
@@ -64,7 +91,8 @@ public class ExtensionUtils {
         CREATION_DEFER_LENGTH("creation-defer-length", CREATION_DEFER_LENGTH_CLASS),
         TERMINATION("termination", TERMINATION_EXTENSION_CLASS),
         CONCATENATION("concatenation", CONCATENATION_EXTENSION_CLASS, CREATION_DEFER_LENGTH_CLASS),
-        EXPIRATION("expiration", EXPIRATION_EXTENSION_CLASS);
+        EXPIRATION("expiration", EXPIRATION_EXTENSION_CLASS),
+        CHECKSUM("checksum", CHECKSUM_EXTENSION_CLASS);
 
         final Class<?>[] extensionClass;
         final String extensionValue;

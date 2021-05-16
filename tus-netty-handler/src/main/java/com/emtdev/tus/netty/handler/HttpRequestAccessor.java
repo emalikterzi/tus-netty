@@ -13,11 +13,15 @@ public class HttpRequestAccessor {
     public static String UPLOAD_OFFSET = "Upload-Offset";
     public static String UPLOAD_EXPIRES = "Upload-Expires";
     public static String UPLOAD_LENGTH = "Upload-Length";
+    public static String TUS_EXTENSION = "Tus-Extension";
+    public static String TUS_CHECKSUM_ALG = "Tus-Checksum-Algorithm";
+    public static String TUS_MAX_SIZE = "Tus-Max-Size";
     public static String UPLOAD_DEFER_LENGTH = "Upload-Defer-Length";
     public static String HTTP_METHOD_OVERRIDE = "X-HTTP-Method-Override";
     public static String UPLOAD_CONCAT = "Upload-Concat";
     public static String LOCATION = "Location";
     public static String MEDIA_TYPE_STREAM = "application/offset+octet-stream";
+    public static String UPLOAD_CHECKSUM = "Upload-Checksum";
 
     private final HttpRequest httpRequest;
     private TusUploadMetaData uploadMetaData;
@@ -84,4 +88,24 @@ public class HttpRequestAccessor {
         return httpRequest.headers().get(UPLOAD_CONCAT);
     }
 
+    public boolean uploadChecksum() {
+        String value = httpRequest.headers().get(UPLOAD_CHECKSUM);
+        return !StringUtil.isNullOrEmpty(value);
+    }
+
+    public String getChecksumAlgName() {
+        String value = httpRequest.headers().get(UPLOAD_CHECKSUM);
+        if (StringUtil.isNullOrEmpty(value)) {
+            return "";
+        }
+        return value.split(" ")[0].trim();
+    }
+
+    public String getChecksumValue() {
+        String value = httpRequest.headers().get(UPLOAD_CHECKSUM);
+        if (StringUtil.isNullOrEmpty(value)) {
+            return "";
+        }
+        return value.split(" ")[1].trim();
+    }
 }

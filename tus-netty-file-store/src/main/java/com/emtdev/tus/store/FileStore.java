@@ -4,22 +4,25 @@ import com.emtdev.tus.core.TusConfigStore;
 import com.emtdev.tus.core.TusStore;
 import com.emtdev.tus.core.domain.Operation;
 import com.emtdev.tus.core.domain.OperationResult;
+import com.emtdev.tus.core.extension.ChecksumExtension;
 import com.emtdev.tus.core.extension.ConcatenationExtension;
-import com.emtdev.tus.core.extension.CreationDeferLengthExtension;
-import com.emtdev.tus.core.extension.CreationExtension;
 import com.emtdev.tus.core.extension.CreationWithUploadExtension;
 import com.emtdev.tus.core.extension.TerminationExtension;
-import io.netty.buffer.ByteBuf;
 
-import java.io.*;
+import java.io.Closeable;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Paths;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
-public class FileStore extends TusStore implements ConcatenationExtension, CreationWithUploadExtension, TerminationExtension {
+public class FileStore extends TusStore implements ConcatenationExtension, ChecksumExtension, CreationWithUploadExtension, TerminationExtension {
 
     private final String baseDirectory;
     private final static int BUFFER = 4096;
+    private final static String[] CHECKSUMS = {"md5", "sha-1"};
 
     public FileStore(String baseDirectory, TusConfigStore configStore) {
         super(configStore);
@@ -139,4 +142,13 @@ public class FileStore extends TusStore implements ConcatenationExtension, Creat
         return this.internalWrite(fileId, inputStream);
     }
 
+    @Override
+    public String[] checksumStrategies() {
+        return CHECKSUMS;
+    }
+
+    @Override
+    public String checksum(String alg, String fileId) {
+        return null;
+    }
 }
