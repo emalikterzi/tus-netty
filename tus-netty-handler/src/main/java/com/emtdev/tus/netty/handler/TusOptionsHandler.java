@@ -1,6 +1,5 @@
 package com.emtdev.tus.netty.handler;
 
-import com.emtdev.tus.core.extension.ChecksumExtension;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -34,12 +33,6 @@ public class TusOptionsHandler extends TusBaseRequestHandler {
 
         if (!extensions.equals("")) {
             httpHeaders.add(HttpRequestAccessor.TUS_EXTENSION, extensions);
-        }
-
-        if (ExtensionUtils.supports(getConfiguration().getStore(), ExtensionUtils.Extension.CHECKSUM)) {
-            ChecksumExtension checksumExtension = (ChecksumExtension) getConfiguration().getStore();
-            String value = ExtensionUtils.checksumHeaderValue(checksumExtension);
-            httpHeaders.add(HttpRequestAccessor.TUS_CHECKSUM_ALG, value);
         }
 
         if (getConfiguration().getMaxFileSize() != 0) {

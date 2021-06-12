@@ -1,6 +1,5 @@
 package com.emtdev.tus.netty.handler;
 
-import com.emtdev.tus.netty.event.TusEventPublisher;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -24,21 +23,12 @@ public class TusNettyDecoder extends ChannelInboundHandlerAdapter {
     private final TusDeleteHandler tusDeleteHandler;
     private final TusResponseInterceptorHandler tusDuplexHandler = new TusResponseInterceptorHandler();
     private final TusWrongRequestHandler tusWrongRequestHandler = new TusWrongRequestHandler();
-    private final TusEventPublisher eventPublisher;
 
     public TusNettyDecoder(TusConfiguration tusConfiguration) {
-
-        if (tusConfiguration.getLocationProvider() != null && tusConfiguration.getListeners() != null &&
-                !tusConfiguration.getListeners().isEmpty()) {
-            eventPublisher = new TusEventPublisher(tusConfiguration.getTusEventExecutorProvider(), tusConfiguration.getListeners(), tusConfiguration.getStore());
-        } else {
-            eventPublisher = new TusEventPublisher(null, null, null);
-        }
-
         this.tusOptionsHandler = new TusOptionsHandler(tusConfiguration);
         this.tusConfiguration = tusConfiguration;
         this.tusHeadHandler = new TusHeadHandler(tusConfiguration);
-        this.tusDeleteHandler = new TusDeleteHandler(tusConfiguration, eventPublisher);
+        this.tusDeleteHandler = new TusDeleteHandler(tusConfiguration);
     }
 
     @Override
@@ -68,9 +58,9 @@ public class TusNettyDecoder extends ChannelInboundHandlerAdapter {
                 } else if (DELETE.equals(requestMethod)) {
                     ctx.pipeline().addLast(tusDeleteHandler);
                 } else if (POST.equals(requestMethod)) {
-                    ctx.pipeline().addLast(new TusPostHandler(this.tusConfiguration, eventPublisher));
+                    ctx.pipeline().addLast(new TusPostHandler(this.tusConfiguration));
                 } else if (PATCH.equals(requestMethod)) {
-                    ctx.pipeline().addLast(new TusPatchHandler(this.tusConfiguration, eventPublisher));
+                    ctx.pipeline().addLast(new TusPatchHandler(this.tusConfiguration));
                 } else {
                     ctx.pipeline().addLast(tusWrongRequestHandler);
                 }

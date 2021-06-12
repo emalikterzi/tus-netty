@@ -6,8 +6,6 @@ import com.emtdev.tus.core.domain.TusUploadMetaData;
 import com.emtdev.tus.core.extension.ConcatenationExtension;
 import com.emtdev.tus.core.extension.CreationDeferLengthExtension;
 import com.emtdev.tus.core.extension.CreationExtension;
-import com.emtdev.tus.netty.event.TusEvent;
-import com.emtdev.tus.netty.event.TusEventPublisher;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -21,8 +19,8 @@ public class TusPostHandler extends TusBaseRequestBodyHandler {
 
     private String locationHeader;
 
-    public TusPostHandler(TusConfiguration configuration, TusEventPublisher tusEventPublisher) {
-        super(configuration, tusEventPublisher, TusNettyDecoder.POST);
+    public TusPostHandler(TusConfiguration configuration) {
+        super(configuration, TusNettyDecoder.POST);
     }
 
     @Override
@@ -106,7 +104,6 @@ public class TusPostHandler extends TusBaseRequestBodyHandler {
                     addExpireHeaderToResponse(response);
 
                     tryToSaveFileStat(fileId, accessor.getUploadMetadata(), fileIds, accessor.getUploadConcat());
-                    tusEventPublisher.publishEvent(new TusEvent(fileId, TusEvent.Type.CREATE));
                 } else {
                     response = HttpResponseUtils.createHttpResponseWithBody(HttpResponseStatus.INTERNAL_SERVER_ERROR, result.getFailedReason());
                 }
@@ -180,8 +177,6 @@ public class TusPostHandler extends TusBaseRequestBodyHandler {
         }
 
         tryToSaveFileStat(fileId, accessor.getUploadMetadata(), uploadLength, accessor.uploadDeferLength(), partial);
-
-        tusEventPublisher.publishEvent(new TusEvent(fileId, TusEvent.Type.CREATE));
 
         if (contentLength == 0) {
             //creation must be called

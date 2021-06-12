@@ -5,13 +5,16 @@ import com.emtdev.tus.core.domain.OperationResult;
 import com.emtdev.tus.core.extension.CreationExtension;
 import com.emtdev.tus.core.extension.CreationWithUploadExtension;
 import com.emtdev.tus.core.extension.ExpirationExtension;
-import com.emtdev.tus.netty.event.TusEventPublisher;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.UnpooledByteBufAllocator;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.handler.codec.http.*;
+import io.netty.handler.codec.http.HttpContent;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.internal.StringUtil;
 
@@ -20,7 +23,11 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantLock;
 
 public abstract class TusBaseRequestBodyHandler extends ChannelInboundHandlerAdapter {
@@ -29,7 +36,6 @@ public abstract class TusBaseRequestBodyHandler extends ChannelInboundHandlerAda
     private final ReentrantLock lock = new ReentrantLock();
     private final Object locker = new Object();
     private final TusConfiguration configuration;
-    protected final TusEventPublisher tusEventPublisher;
     protected final String httpMethod;
     protected State currentState = State.NEW;
 
@@ -40,9 +46,8 @@ public abstract class TusBaseRequestBodyHandler extends ChannelInboundHandlerAda
     private Callable<OperationResult> operationResultCallable;
     private Future<OperationResult> operationResultFuture;
 
-    public TusBaseRequestBodyHandler(TusConfiguration configuration, TusEventPublisher tusEventPublisher, String httpMethpd) {
+    public TusBaseRequestBodyHandler(TusConfiguration configuration, String httpMethpd) {
         this.configuration = configuration;
-        this.tusEventPublisher = tusEventPublisher;
         this.httpMethod = httpMethpd;
     }
 
@@ -76,10 +81,6 @@ public abstract class TusBaseRequestBodyHandler extends ChannelInboundHandlerAda
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-//        try {
-//            getConfiguration().getStore().onException(fileId, cause);
-//        } catch (Exception e) {
-//        }
         ctx.fireExceptionCaught(cause);
     }
 

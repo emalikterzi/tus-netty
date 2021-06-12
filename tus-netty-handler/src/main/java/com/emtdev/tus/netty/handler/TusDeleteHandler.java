@@ -1,24 +1,19 @@
 package com.emtdev.tus.netty.handler;
 
 import com.emtdev.tus.core.extension.TerminationExtension;
-import com.emtdev.tus.netty.event.TusEvent;
-import com.emtdev.tus.netty.event.TusEventPublisher;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.util.ReferenceCountUtil;
 
 @ChannelHandler.Sharable
 public class TusDeleteHandler extends TusBaseRequestHandler {
 
-    private final TusEventPublisher eventPublisher;
 
-    public TusDeleteHandler(TusConfiguration tusConfiguration, TusEventPublisher eventPublisher) {
+    public TusDeleteHandler(TusConfiguration tusConfiguration) {
         super(tusConfiguration);
-        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -34,8 +29,6 @@ public class TusDeleteHandler extends TusBaseRequestHandler {
             try {
                 terminationExtension.delete(fileId);
                 response = HttpResponseUtils.createHttpResponse(HttpResponseStatus.NO_CONTENT);
-                eventPublisher.publishEvent(new TusEvent(fileId, TusEvent.Type.DELETE));
-
             } catch (Exception e) {
                 response =
                         HttpResponseUtils.createHttpResponse(HttpResponseStatus.NOT_FOUND);

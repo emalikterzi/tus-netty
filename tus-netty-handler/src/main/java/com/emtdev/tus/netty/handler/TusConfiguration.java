@@ -3,10 +3,6 @@ package com.emtdev.tus.netty.handler;
 import com.emtdev.tus.core.TusFileIdProvider;
 import com.emtdev.tus.core.TusLocationProvider;
 import com.emtdev.tus.core.TusStore;
-import com.emtdev.tus.netty.event.TusEventExecutorProvider;
-import com.emtdev.tus.netty.event.TusEventListener;
-
-import java.util.List;
 
 public class TusConfiguration {
 
@@ -15,8 +11,7 @@ public class TusConfiguration {
     private final TusLocationProvider locationProvider;
     private final TusFileIdProvider fileIdProvider;
     private final long maxFileSize;
-    private TusEventExecutorProvider tusEventExecutorProvider;
-    private List<TusEventListener> listeners;
+
 
     public TusConfiguration(String contextPath, TusStore store,
                             TusLocationProvider locationProvider,
@@ -49,19 +44,4 @@ public class TusConfiguration {
         return maxFileSize;
     }
 
-    public TusEventExecutorProvider getTusEventExecutorProvider() {
-        return tusEventExecutorProvider;
-    }
-
-    public void setTusEventExecutorProvider(TusEventExecutorProvider tusEventExecutorProvider) {
-        this.tusEventExecutorProvider = tusEventExecutorProvider;
-    }
-
-    public List<TusEventListener> getListeners() {
-        return listeners;
-    }
-
-    public void setListeners(List<TusEventListener> listeners) {
-        this.listeners = listeners;
-    }
 }

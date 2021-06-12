@@ -4,7 +4,6 @@ import com.emtdev.tus.core.TusConfigStore;
 import com.emtdev.tus.core.TusStore;
 import com.emtdev.tus.core.domain.Operation;
 import com.emtdev.tus.core.domain.OperationResult;
-import com.emtdev.tus.core.extension.ChecksumExtension;
 import com.emtdev.tus.core.extension.ConcatenationExtension;
 import com.emtdev.tus.core.extension.CreationWithUploadExtension;
 import com.emtdev.tus.core.extension.TerminationExtension;
@@ -18,7 +17,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Paths;
 
-public class FileStore extends TusStore implements ConcatenationExtension, ChecksumExtension, CreationWithUploadExtension, TerminationExtension {
+public class FileStore extends TusStore implements ConcatenationExtension, CreationWithUploadExtension, TerminationExtension {
 
     private final String baseDirectory;
     private final static int BUFFER = 4096;
@@ -142,13 +141,4 @@ public class FileStore extends TusStore implements ConcatenationExtension, Check
         return this.internalWrite(fileId, inputStream);
     }
 
-    @Override
-    public String[] checksumStrategies() {
-        return CHECKSUMS;
-    }
-
-    @Override
-    public String checksum(String alg, String fileId) {
-        return null;
-    }
 }
