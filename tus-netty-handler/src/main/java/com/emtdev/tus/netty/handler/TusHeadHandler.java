@@ -3,14 +3,12 @@ package com.emtdev.tus.netty.handler;
 import com.emtdev.tus.core.TusStore;
 import com.emtdev.tus.core.domain.FileStat;
 import com.emtdev.tus.core.extension.CreationDeferLengthExtension;
-import com.emtdev.tus.core.extension.CreationExtension;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.util.ReferenceCountUtil;
 import io.netty.util.internal.StringUtil;
 
 @ChannelHandler.Sharable

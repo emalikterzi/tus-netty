@@ -3,13 +3,11 @@ package com.emtdev.tus.core.extension;
 import com.emtdev.tus.core.domain.OperationResult;
 import io.netty.buffer.ByteBuf;
 
-import java.io.InputStream;
-
 public interface CreationExtension extends Extension {
 
     OperationResult createFile(String fileId);
 
-    OperationResult write(String fileId, InputStream inputStream);
+    OperationResult write(String fileId, ByteBuf byteBuf);
 
     boolean exist(String fileId);
 

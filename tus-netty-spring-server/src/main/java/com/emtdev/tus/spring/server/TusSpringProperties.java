@@ -16,6 +16,70 @@ public class TusSpringProperties {
 
     private NettySocketConfig socket;
 
+    public int getBossThreads() {
+        return bossThreads;
+    }
+
+    public void setBossThreads(int bossThreads) {
+        this.bossThreads = bossThreads;
+    }
+
+    public int getWorkerThreads() {
+        return workerThreads;
+    }
+
+    public void setWorkerThreads(int workerThreads) {
+        this.workerThreads = workerThreads;
+    }
+
+    public boolean isUseLinuxNativeEpoll() {
+        return useLinuxNativeEpoll;
+    }
+
+    public void setUseLinuxNativeEpoll(boolean useLinuxNativeEpoll) {
+        this.useLinuxNativeEpoll = useLinuxNativeEpoll;
+    }
+
+    public String getHostname() {
+        return hostname;
+    }
+
+    public void setHostname(String hostname) {
+        this.hostname = hostname;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
+    }
+
+    public NettySocketConfig getSocket() {
+        return socket;
+    }
+
+    public void setSocket(NettySocketConfig socket) {
+        this.socket = socket;
+    }
+
+    public String getLocationPrefix() {
+        return locationPrefix;
+    }
+
+    public void setLocationPrefix(String locationPrefix) {
+        this.locationPrefix = locationPrefix;
+    }
+
+    public String getBasePath() {
+        return basePath;
+    }
+
+    public void setBasePath(String basePath) {
+        this.basePath = basePath;
+    }
+
     public static class NettySocketConfig {
 
         private boolean tcpNoDelay = true;
@@ -82,70 +146,5 @@ public class TusSpringProperties {
         public void setAcceptBackLog(int acceptBackLog) {
             this.acceptBackLog = acceptBackLog;
         }
-    }
-
-
-    public int getBossThreads() {
-        return bossThreads;
-    }
-
-    public void setBossThreads(int bossThreads) {
-        this.bossThreads = bossThreads;
-    }
-
-    public int getWorkerThreads() {
-        return workerThreads;
-    }
-
-    public void setWorkerThreads(int workerThreads) {
-        this.workerThreads = workerThreads;
-    }
-
-    public boolean isUseLinuxNativeEpoll() {
-        return useLinuxNativeEpoll;
-    }
-
-    public void setUseLinuxNativeEpoll(boolean useLinuxNativeEpoll) {
-        this.useLinuxNativeEpoll = useLinuxNativeEpoll;
-    }
-
-    public String getHostname() {
-        return hostname;
-    }
-
-    public void setHostname(String hostname) {
-        this.hostname = hostname;
-    }
-
-    public int getPort() {
-        return port;
-    }
-
-    public void setPort(int port) {
-        this.port = port;
-    }
-
-    public NettySocketConfig getSocket() {
-        return socket;
-    }
-
-    public void setSocket(NettySocketConfig socket) {
-        this.socket = socket;
-    }
-
-    public String getLocationPrefix() {
-        return locationPrefix;
-    }
-
-    public void setLocationPrefix(String locationPrefix) {
-        this.locationPrefix = locationPrefix;
-    }
-
-    public String getBasePath() {
-        return basePath;
-    }
-
-    public void setBasePath(String basePath) {
-        this.basePath = basePath;
     }
 }

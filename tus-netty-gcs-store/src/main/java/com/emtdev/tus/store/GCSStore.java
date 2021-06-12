@@ -2,8 +2,6 @@ package com.emtdev.tus.store;
 
 import com.emtdev.tus.core.TusConfigStore;
 import com.emtdev.tus.core.domain.OperationResult;
-import com.google.cloud.storage.Storage;
-import com.google.cloud.storage.StorageOptions;
 
 public class GCSStore extends FileStore {
 

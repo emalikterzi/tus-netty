@@ -1,14 +1,14 @@
-var upload          = null
+var upload = null
 var uploadIsRunning = false
-var toggleBtn       = document.querySelector('#toggle-btn')
-var input           = document.querySelector('input[type=file]')
-var progress        = document.querySelector('.progress')
-var progressBar     = progress.querySelector('.bar')
-var alertBox        = document.querySelector('#support-alert')
-var uploadList      = document.querySelector('#upload-list')
-var chunkInput      = document.querySelector('#chunksize')
-var parallelInput   = document.querySelector('#paralleluploads')
-var endpointInput   = document.querySelector('#endpoint')
+var toggleBtn = document.querySelector('#toggle-btn')
+var input = document.querySelector('input[type=file]')
+var progress = document.querySelector('.progress')
+var progressBar = progress.querySelector('.bar')
+var alertBox = document.querySelector('#support-alert')
+var uploadList = document.querySelector('#upload-list')
+var chunkInput = document.querySelector('#chunksize')
+var parallelInput = document.querySelector('#paralleluploads')
+var endpointInput = document.querySelector('#endpoint')
 
 if (!tus.isSupported) {
     alertBox.classList.remove('hidden')
@@ -40,7 +40,7 @@ toggleBtn.addEventListener('click', (e) => {
 
 input.addEventListener('change', startUpload)
 
-function startUpload () {
+function startUpload() {
     var file = input.files[0]
     // Only continue if a file has actually been selected.
     // IE will trigger a change event even if we reset the input element
@@ -67,11 +67,11 @@ function startUpload () {
         chunkSize,
         retryDelays: [0, 1000, 3000, 5000],
         parallelUploads,
-        metadata   : {
+        metadata: {
             filename: file.name,
             filetype: file.type,
         },
-        onError (error) {
+        onError(error) {
             if (error.originalRequest) {
                 if (window.confirm(`Failed because: ${error}\nDo you want to retry?`)) {
                     upload.start()
@@ -84,12 +84,12 @@ function startUpload () {
 
             reset()
         },
-        onProgress (bytesUploaded, bytesTotal) {
+        onProgress(bytesUploaded, bytesTotal) {
             var percentage = (bytesUploaded / bytesTotal * 100).toFixed(2)
             progressBar.style.width = `${percentage}%`
             console.log(bytesUploaded, bytesTotal, `${percentage}%`)
         },
-        onSuccess () {
+        onSuccess() {
             var anchor = document.createElement('a')
             anchor.textContent = `Download ${upload.file.name} (${upload.file.size} bytes)`
             anchor.href = upload.url
@@ -109,14 +109,14 @@ function startUpload () {
     })
 }
 
-function reset () {
+function reset() {
     input.value = ''
     toggleBtn.textContent = 'start upload'
     upload = null
     uploadIsRunning = false
 }
 
-function askToResumeUpload (previousUploads, upload) {
+function askToResumeUpload(previousUploads, upload) {
     if (previousUploads.length === 0) return
 
     let text = 'You tried to upload this file previously at these times:\n\n'

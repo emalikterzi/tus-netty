@@ -8,11 +8,10 @@
 > the user wants to pause, or by accident in case of an network issue or server
 > outage.
 
-tusd is the official reference implementation of the [tus resumable upload
-protocol](http://www.tus.io/protocols/resumable-upload.html). The protocol
-specifies a flexible method to upload files to remote servers using HTTP.
-The special feature is the ability to pause and resume uploads at any
-moment allowing to continue seamlessly after e.g. network interruptions.
+tusd is the official reference implementation of
+the [tus resumable upload protocol](http://www.tus.io/protocols/resumable-upload.html). The protocol specifies a
+flexible method to upload files to remote servers using HTTP. The special feature is the ability to pause and resume
+uploads at any moment allowing to continue seamlessly after e.g. network interruptions.
 
 **Protocol version:** 1.0.0
 
@@ -27,12 +26,13 @@ moment allowing to continue seamlessly after e.g. network interruptions.
 
 # Stores
 
-- FileStore [ x ] , supports extension creation,creation-with-upload,creation-defer-length,expiration,concatenation,termination
-- S3Store [ x ] , supports extension creation,creation-with-upload,creation-defer-length,expiration,concatenation,termination
+- FileStore [ x ] , supports extension
+  creation,creation-with-upload,creation-defer-length,expiration,concatenation,termination
+- S3Store [ x ] , supports extension
+  creation,creation-with-upload,creation-defer-length,expiration,concatenation,termination
 - GCSStore [ ]
 
-s3 store uses file disk to supports some extensions 
-s3 store not using multipart todo
+s3 store uses file disk to supports some extensions s3 store not using multipart todo
 
 ## About Implementation Of This Server
 

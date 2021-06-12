@@ -10,15 +10,15 @@ import org.springframework.context.annotation.Import;
 
 @SpringBootConfiguration
 @EnableAutoConfiguration(exclude = {
-		MongoAutoConfiguration.class,
-		MongoDataAutoConfiguration.class
+        MongoAutoConfiguration.class,
+        MongoDataAutoConfiguration.class
 })
 @Import(TusNettyConfiguration.class)
 
 public class TusNettySpringApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(TusNettySpringApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(TusNettySpringApplication.class, args);
+    }
 
 }

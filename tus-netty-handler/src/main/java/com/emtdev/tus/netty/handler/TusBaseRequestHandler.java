@@ -14,17 +14,16 @@ public abstract class TusBaseRequestHandler extends SimpleChannelInboundHandler<
         this.configuration = tusConfiguration;
     }
 
-    public TusConfiguration getConfiguration() {
-        return configuration;
-    }
-
-
     public static String resolveFileFromUri(String uri) {
         if (StringUtil.isNullOrEmpty(uri)) {
             return null;
         }
         String[] uriParts = uri.split("/");
         return uriParts[uriParts.length - 1];
+    }
+
+    public TusConfiguration getConfiguration() {
+        return configuration;
     }
 
 }

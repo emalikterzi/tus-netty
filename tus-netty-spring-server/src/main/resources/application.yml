@@ -14,4 +14,4 @@ tus:
       acceptBackLog: 1024
 spring:
   profiles:
-    active: testbox
+    active: local

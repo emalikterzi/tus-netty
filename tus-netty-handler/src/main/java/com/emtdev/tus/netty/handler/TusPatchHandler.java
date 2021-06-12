@@ -14,10 +14,6 @@ import io.netty.util.internal.StringUtil;
 
 public class TusPatchHandler extends TusBaseRequestBodyHandler {
 
-    public static HttpResponseStatus CHECKSUM_MISMATCH = new HttpResponseStatus(460, "Checksum Mismatch");
-
-    private String checksumValue;
-    private String checksumAlg;
 
     public TusPatchHandler(TusConfiguration configuration) {
         super(configuration, TusNettyDecoder.PATCH);

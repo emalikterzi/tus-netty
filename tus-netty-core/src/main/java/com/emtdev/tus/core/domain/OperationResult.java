@@ -12,6 +12,10 @@ public class OperationResult {
         this.failedReason = failedReason;
     }
 
+    public static OperationResult of(Operation operation, String failedReason) {
+        return new OperationResult(operation, failedReason);
+    }
+
     public boolean isSuccess() {
         return Operation.SUCCESS.equals(this.operation);
     }
@@ -22,10 +26,6 @@ public class OperationResult {
 
     public void setFailedReason(String failedReason) {
         this.failedReason = failedReason;
-    }
-
-    public static OperationResult of(Operation operation, String failedReason) {
-        return new OperationResult(operation, failedReason);
     }
 
 }

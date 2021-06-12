@@ -7,21 +7,24 @@ import com.emtdev.tus.core.domain.OperationResult;
 import com.emtdev.tus.core.extension.ConcatenationExtension;
 import com.emtdev.tus.core.extension.CreationWithUploadExtension;
 import com.emtdev.tus.core.extension.TerminationExtension;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufInputStream;
 
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 
 public class FileStore extends TusStore implements ConcatenationExtension, CreationWithUploadExtension, TerminationExtension {
 
-    private final String baseDirectory;
     private final static int BUFFER = 4096;
-    private final static String[] CHECKSUMS = {"md5", "sha-1"};
+    private final String baseDirectory;
+    private final Map<String, OutputStream> fileIdOutputMap = new HashMap<>();
 
     public FileStore(String baseDirectory, TusConfigStore configStore) {
         super(configStore);
@@ -39,9 +42,10 @@ public class FileStore extends TusStore implements ConcatenationExtension, Creat
         }
     }
 
+
     @Override
-    public OperationResult write(String fileId, InputStream inputStream) {
-        return internalWrite(fileId, inputStream);
+    public OperationResult write(String fileId, ByteBuf byteBuf) {
+        return internalWrite(fileId, byteBuf);
     }
 
     @Override
@@ -58,7 +62,15 @@ public class FileStore extends TusStore implements ConcatenationExtension, Creat
 
     @Override
     public OperationResult finalizeFile(String fileId) {
-        //already file persisted in file disk do nothing
+        OutputStream outputStream = this.fileIdOutputMap.get(fileId);
+
+        if (outputStream == null) {
+            return OperationResult.SUCCESS;
+        }
+
+        closeSilently(outputStream);
+        this.fileIdOutputMap.remove(fileId);
+
         return OperationResult.SUCCESS;
     }
 
@@ -73,10 +85,12 @@ public class FileStore extends TusStore implements ConcatenationExtension, Creat
         return Paths.get(baseDirectory, fileId).toFile();
     }
 
-    private OperationResult internalWrite(String fileId, InputStream inputStream) {
+    private OperationResult internalWrite(String fileId, ByteBuf byteBuf) {
+        ByteBufInputStream inputStream = new ByteBufInputStream(byteBuf, true);
+
         OutputStream outputStream;
         try {
-            outputStream = new FileOutputStream(getFile(fileId), true);
+            outputStream = getOutputStream(fileId);
         } catch (Exception e) {
             return OperationResult.of(Operation.FAILED, "Could Not Open Stream");
         }
@@ -91,10 +105,21 @@ public class FileStore extends TusStore implements ConcatenationExtension, Creat
             return OperationResult.of(Operation.FAILED, "Could Not Write Stream");
         }
 
-        closeSilently(outputStream);
+        closeSilently(inputStream);
 
         return OperationResult.SUCCESS;
     }
+
+    private OutputStream getOutputStream(String fileId) throws Exception {
+        OutputStream outputStream = this.fileIdOutputMap.get(fileId);
+
+        if (outputStream == null) {
+            outputStream = new FileOutputStream(getFile(fileId));
+            this.fileIdOutputMap.put(fileId, outputStream);
+        }
+        return outputStream;
+    }
+
 
     private void closeSilently(Closeable closeable) {
         if (closeable != null) {
@@ -134,11 +159,6 @@ public class FileStore extends TusStore implements ConcatenationExtension, Creat
             return OperationResult.of(Operation.FAILED, "File Merge Failed");
         }
 
-    }
-
-    @Override
-    public OperationResult createAndWrite(String fileId, InputStream inputStream) {
-        return this.internalWrite(fileId, inputStream);
     }
 
 }

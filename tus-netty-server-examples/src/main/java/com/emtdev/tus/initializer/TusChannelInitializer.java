@@ -10,21 +10,18 @@ import com.emtdev.tus.core.TusStore;
 import com.emtdev.tus.core.impl.InMemoryTusStoreConfig;
 import com.emtdev.tus.custom.DefaultFileIdGenerator;
 import com.emtdev.tus.custom.DefaultLocationProvider;
-import com.emtdev.tus.custom.FileDiskConfigStore;
 import com.emtdev.tus.netty.handler.TusConfiguration;
 import com.emtdev.tus.netty.handler.TusNettyDecoder;
-import com.emtdev.tus.store.FileStore;
 import com.emtdev.tus.store.S3Store;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
-import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
 
 public class TusChannelInitializer extends ChannelInitializer<Channel> {
-    private final TusConfiguration tusConfiguration;
     private final static String baseDirectory = "/Users/emalikterzi/tus-sample";
+    private final TusConfiguration tusConfiguration;
 
     public TusChannelInitializer() {
 

@@ -17,7 +17,7 @@ import org.springframework.context.annotation.Configuration;
 @EnableConfigurationProperties(TusSpringProperties.class)
 public class TusNettyConfiguration {
 
-    private static Logger logger  = LoggerFactory.getLogger(TusNettyConfiguration.class);
+    private static Logger logger = LoggerFactory.getLogger(TusNettyConfiguration.class);
 
     @Autowired
     private TusSpringProperties tusSpringProperties;

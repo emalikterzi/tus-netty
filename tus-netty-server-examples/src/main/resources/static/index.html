@@ -3,15 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <title>tus-js-client demo - File Upload</title>
-    <link href="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css" rel="stylesheet">
-    <link href="./demo.css" rel="stylesheet" media="screen">
+    <link href="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css"
+          rel="stylesheet">
+    <link href="./demo.css" media="screen" rel="stylesheet">
 </head>
 <body>
 <div class="container">
     <h1>tus-js-client demo - File Upload</h1>
 
     <p>
-        This demo shows the basic functionality of the tus protocol. You can select a file using the controls below and start/pause the upload as you wish.
+        This demo shows the basic functionality of the tus protocol. You can select a file using the controls below and
+        start/pause the upload as you wish.
     </p>
 
     <p>
@@ -21,11 +23,13 @@
     </p>
 
     <p>
-        A demo where a video is recorded from your webcam while being simultaneously uploaded, can be found <a href="./video.html">here</a>.
+        A demo where a video is recorded from your webcam while being simultaneously uploaded, can be found <a
+            href="./video.html">here</a>.
     </p>
 
     <div class="alert alert-warining hidden" id="support-alert">
-        <b>Warning!</b> Your browser does not seem to support the features necessary to run tus-js-client. The buttons below may work but probably will fail silently.
+        <b>Warning!</b> Your browser does not seem to support the features necessary to run tus-js-client. The buttons
+        below may work but probably will fail silently.
     </div>
 
     <br>
@@ -38,7 +42,7 @@
                 </label>
             </td>
             <td>
-                <input type="text" id="endpoint" name="endpoint" value="https://tusd.tusdemo.net/files/">
+                <input id="endpoint" name="endpoint" type="text" value="https://tusd.tusdemo.net/files/">
             </td>
         </tr>
         <tr>
@@ -48,7 +52,7 @@
                 </label>
             </td>
             <td>
-                <input type="number" id="chunksize" name="chunksize">
+                <input id="chunksize" name="chunksize" type="number">
             </td>
         </tr>
         <tr>
@@ -58,7 +62,7 @@
                 </label>
             </td>
             <td>
-                <input type="number" id="paralleluploads" name="paralleluploads" value="1">
+                <input id="paralleluploads" name="paralleluploads" type="number" value="1">
             </td>
         </tr>
     </table>
