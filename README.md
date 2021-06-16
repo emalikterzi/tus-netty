@@ -36,7 +36,9 @@ s3 store uses file disk to supports some extensions s3 store not using multipart
 
 ## About Implementation Of This Server
 
-tbd
+- Supports Chunk upload 
+- Supports Parallel upload
+- Zero memory allocation 
 
 # Not Production Ready !!
 
