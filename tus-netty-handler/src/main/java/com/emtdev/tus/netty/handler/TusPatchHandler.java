@@ -25,7 +25,7 @@ public class TusPatchHandler extends TusBaseRequestBodyHandler {
     }
 
     @Override
-    protected void onWriteFinished(ChannelHandlerContext ctx, HttpContent msg) {
+    protected void onWriteFinished(ChannelHandlerContext ctx) {
         CreationExtension creationExtension = getConfiguration().getStore();
 
         HttpResponse response = HttpResponseUtils.createHttpResponse(HttpResponseStatus.NO_CONTENT);

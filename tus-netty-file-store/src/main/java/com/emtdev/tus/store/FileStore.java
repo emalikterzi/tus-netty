@@ -69,6 +69,7 @@ public class FileStore extends TusStore implements ConcatenationExtension, Creat
         }
 
         closeSilently(outputStream);
+
         this.fileIdOutputMap.remove(fileId);
 
         return OperationResult.SUCCESS;
@@ -86,7 +87,7 @@ public class FileStore extends TusStore implements ConcatenationExtension, Creat
     }
 
     private OperationResult internalWrite(String fileId, ByteBuf byteBuf) {
-        ByteBufInputStream inputStream = new ByteBufInputStream(byteBuf, true);
+        ByteBufInputStream inputStream = new ByteBufInputStream(byteBuf, false);
 
         OutputStream outputStream;
         try {
@@ -114,10 +115,12 @@ public class FileStore extends TusStore implements ConcatenationExtension, Creat
         OutputStream outputStream = this.fileIdOutputMap.get(fileId);
 
         if (outputStream == null) {
-            outputStream = new FileOutputStream(getFile(fileId));
+            outputStream = new FileOutputStream(getFile(fileId), true);
             this.fileIdOutputMap.put(fileId, outputStream);
         }
+
         return outputStream;
+
     }
 
 

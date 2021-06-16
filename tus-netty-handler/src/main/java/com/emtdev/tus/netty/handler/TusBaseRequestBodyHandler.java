@@ -1,6 +1,5 @@
 package com.emtdev.tus.netty.handler;
 
-import com.emtdev.tus.core.TusStore;
 import com.emtdev.tus.core.domain.OperationResult;
 import com.emtdev.tus.core.extension.ExpirationExtension;
 import io.netty.channel.ChannelFutureListener;
@@ -18,6 +17,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public abstract class TusBaseRequestBodyHandler extends ChannelInboundHandlerAdapter {
 
@@ -25,7 +26,11 @@ public abstract class TusBaseRequestBodyHandler extends ChannelInboundHandlerAda
     protected final String httpMethod;
     private final TusConfiguration configuration;
     protected State currentState = State.NEW;
+    private boolean finalByteRead = false;
     protected String fileId;
+
+    private TusByteBuffHandler tusByteBuffHandler;
+    private ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     public TusBaseRequestBodyHandler(TusConfiguration configuration, String httpMethpd) {
         this.configuration = configuration;
@@ -48,20 +53,30 @@ public abstract class TusBaseRequestBodyHandler extends ChannelInboundHandlerAda
 
     protected abstract void channelRead0(ChannelHandlerContext ctx, HttpContent msg) throws Exception;
 
-    protected abstract void onWriteFinished(ChannelHandlerContext ctx, HttpContent msg);
+    protected abstract void onWriteFinished(ChannelHandlerContext ctx);
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        if (this.currentState == State.BODY && this.fileId != null) {
-            this.getConfiguration().getStore().finalizeFile(fileId);
-        }
+        cleanWithoutExpect();
         ctx.fireChannelInactive();
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        cleanWithoutExpect();
         ctx.fireExceptionCaught(cause);
     }
+
+    private void cleanWithoutExpect() {
+        /**
+         * son byte alinmadan baglanti kapatilirsa , byteBuff hemen kapatilmali.
+         * bu operasyonun multi instancedaki senaryolari dusunulmeli.
+         */
+        if (this.currentState == State.BODY && !finalByteRead && this.tusByteBuffHandler != null) {
+            this.tusByteBuffHandler.abort();
+        }
+    }
+
 
     private String getDateStr(Date date) {
         SimpleDateFormat dateFormat = new SimpleDateFormat(
@@ -93,20 +108,49 @@ public abstract class TusBaseRequestBodyHandler extends ChannelInboundHandlerAda
         _writeInternal(ctx, msg, requestFinished);
     }
 
-    private void _writeInternal(ChannelHandlerContext ctx, HttpContent msg, boolean requestFinished) {
-        TusStore tusStore = getConfiguration().getStore();
-        OperationResult operationResult = tusStore.write(fileId, msg.content());
-
-        if (!operationResult.isSuccess()) {
-            HttpResponse response = HttpResponseUtils
-                    .createHttpResponseWithBody(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Operation Result Failed On Last Byte");
-            ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+    private void _writeInternal(final ChannelHandlerContext ctx, final HttpContent msg, boolean requestFinished) {
+        if (tusByteBuffHandler == null) {
+            initializeByteBuffHandler();
         }
+
+        if (tusByteBuffHandler.hasError()) {
+
+            OperationResult operationResult = tusByteBuffHandler.getErrorResult();
+
+            HttpResponse response = HttpResponseUtils
+                    .createHttpResponseWithBody(HttpResponseStatus.INTERNAL_SERVER_ERROR, operationResult.getFailedReason());
+            ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+
+            return;
+        }
+
+        tusByteBuffHandler.addByteBuffToOrder(msg.content());
 
         if (requestFinished) {
-            tusStore.finalizeFile(fileId);
-            onWriteFinished(ctx, msg);
+            this.finalByteRead = true;
+
+            final TusByteBuffHandler.ByteBuffHandlerEvent byteBuffHandlerEvent = new TusByteBuffHandler.ByteBuffHandlerEvent() {
+
+                @Override
+                public void onCompleted() {
+                    onWriteFinished(ctx);
+                }
+
+                @Override
+                public void onError(OperationResult operationResult) {
+                    HttpResponse response = HttpResponseUtils
+                            .createHttpResponseWithBody(HttpResponseStatus.INTERNAL_SERVER_ERROR, operationResult.getFailedReason());
+                    ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+                }
+            };
+            tusByteBuffHandler.onFinish(byteBuffHandlerEvent);
         }
+    }
+
+    private synchronized void initializeByteBuffHandler() {
+        tusByteBuffHandler = new TusByteBuffHandler(fileId, getConfiguration().getStore());
+        executorService.execute(tusByteBuffHandler);
+        executorService.shutdown();
     }
 
     @Override
@@ -121,13 +165,12 @@ public abstract class TusBaseRequestBodyHandler extends ChannelInboundHandlerAda
                 HttpRequest message = (HttpRequest) msg;
                 currentState = State.REQUEST;
                 this.channelRead0(ctx, message);
+                ReferenceCountUtil.release(msg);
             } else {
                 HttpContent message = (HttpContent) msg;
                 currentState = State.BODY;
                 this.channelRead0(ctx, message);
             }
-
-            ReferenceCountUtil.release(msg);
 
         } else {
             ctx.fireChannelRead(msg);
